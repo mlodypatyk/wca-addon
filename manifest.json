@@ -2,7 +2,7 @@
 	"name": "Better WCA Profile",
 	"version": "1.4",
 	"description": "Adds more stuff to your WCA profile!",
-	"manifest_version": 4,
+	"manifest_version": 3,
 	"permissions":[
 		"storage"
 	],
