@@ -52,7 +52,7 @@ $(".personal-records td.single").hover(function(){
 	$(this).append(text);
 },
 function(){
-	//console.log($(this)html())
+	//($(this)html())
 	$(this).html($(this).html().split('<div')[0])
 	
 }

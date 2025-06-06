@@ -22,33 +22,8 @@ var nazwy_eventow = {
 	"event-mmagic":"Master Magic",
 };
 var wszystko = {}
-/*
-$( ".results-by-event tbody" ).each(function( index ) {
-  //eventy
-  var event = ""
-  var helper = $(this).attr("class").split(' ');
-  
-  event = helper[0];
-  wszystko[event] = []
-  $(this).find('.result').each(function( index ) {
-	//rundy
-	current = []
-	$(this).find('.solve').each(function( index ) {
-		//console.log( index + ": " + $( this ).text() + " " + event);
-		var tekst = $(this).text();
-		if(tekst != ""){
-			//wszystko[event].push(tekst);
-			current.push(tekst);
-		}
-	});
-	current = current.reverse();
-	wszystko[event] = wszystko[event].concat(current);
-  });
-});
-*/
 $.get('https://www.worldcubeassociation.org/api/v0/persons/' + their_wca_id + '/results', function(data, status){
 wyniki = data;
-console.log(wyniki);
 for(i in wyniki){
 	event_id = 'event-' + wyniki[i]['event_id']
 	if(!wszystko.hasOwnProperty(event_id)){
@@ -56,16 +31,16 @@ for(i in wyniki){
 	}
 	for(j in wyniki[i]['attempts']){
 		if(wyniki[i]['attempts'][j] != 0 && wyniki[i]['attempts'][j] != -1 && wyniki[i]['attempts'][j] != -2){
-			wszystko[event_id].push(wyniki[i]['attempts'][j])
+			wszystko[event_id].push([wyniki[i]['attempts'][j], wyniki[i]['competition_id']+'-'+wyniki[i]['round_type_id']+'-'+(Number(j)+1)])
 		}
 		if(wyniki[i]['attempts'][j] == -1){
-			wszystko[event_id].push(9999999)
+			wszystko[event_id].push([9999999, wyniki[i]['competition_id']+'-'+wyniki[i]['round_type_id']+'-'+(Number(j)+1)])
 		}
 	}
 }
 //multi kurwa :(
 for(i in wszystko['event-333mbf']){
-	time = wszystko['event-333mbf'][i]
+	time = wszystko['event-333mbf'][i][0]
 	nieudane = time%100;
 	czas = (time%10000000 - time%100)/100;
 	roznica = (time%1000000000 - time%10000000)/10000000;
@@ -84,15 +59,15 @@ for(i in wszystko['event-333mbf']){
 	if(punkty == 99){
 		text_form = "DNF"
 	}
-	wszystko['event-333mbf'][i] = [punkty, text_form]
+	wszystko['event-333mbf'][i] = [punkty, text_form, wszystko['event-333mbf'][i][1]]
 }
-console.log(wszystko)
+//console.log(wszystko)
 printAverages()
 });
 function average(array){
-	array.sort(function(a,b) { return a - b;});
+	array.sort(function(a,b) { return a[0] - b[0];});
 	var do_usuniecia = Math.ceil(array.length*0.05);
-	counting = array.slice(do_usuniecia, array.length-do_usuniecia);
+	counting = array.slice(do_usuniecia, array.length-do_usuniecia).map(function a(x){ return x[0] });
 	if(counting[counting.length-1] == 9999999){
 		return 9999999;
 	}
@@ -147,6 +122,15 @@ function bestAverage(array, howmuch){
 	}
 	return [max, how];
 }
+function currentAverage(array, howmuch){
+	if(howmuch > array.length){
+		return -1
+	}
+	how = array.slice(array.length-howmuch, array.length)
+	avg = average(how.slice())
+	console.log([avg, how])
+	return [avg, how]
+}
 function bestMultiAverage(array, howmuch){
 	if(howmuch > array.length){
 		return -1;
@@ -169,7 +153,7 @@ function bestMultiAverage(array, howmuch){
 			max = current_avg
 			how = []
 			for(j=i;j<i+howmuch;j++){
-				how.push(array[j][1])
+				how.push([array[j][1], array[j][2]])
 			}
 		}
 	}
@@ -197,17 +181,17 @@ function convert_array(array, event){
 	current = ""
 	for(var i in array){
 		if(event != "event-333fm" && event != "event-333mbf"){
-			current+=convertBack(array[i]);
+			current+=convertBack(array[i][0]);
 		}
 		if(event == "event-333fm"){
-			if(array[i] == 9999999){
+			if(array[i][0] == 9999999){
 				current+="DNF"
 			}else{
-				current+=array[i];
+				current+=array[i][0];
 			}
 		}
 		if(event == "event-333mbf"){
-			current += array[i]
+			current += array[i][0]
 		}
 		if(i != array.length - 1){
 			current+=", ";
@@ -221,31 +205,46 @@ function convert_array(array, event){
 function printAverages(){
 	averages = [5, 12, 25, 50, 100];
 	all_strings = "";
-	for (var i in averages){
-		table = '<table class = "table table-striped" id = "table' + i + '"><thead><tr><th>Event</th><th>Average of ' + averages[i] + '</th><th>Times</th></tr></thead>';
-		for(event in wszystko){
-			if(event != "event-333mbf" && event != "event-333mbo"){
-				helper = bestAverage(wszystko[event], averages[i]);
+	for(eventName in wszystko){
+		table = '<table class = "table table-striped" id = "table' + i + '"><thead><tr><th>Average of</th><th><span class=" cubing-icon '+eventName+'" style="padding:2px"></span>' + nazwy_eventow[eventName] + '</th><th>Times</th><th>Duration</th></tr></thead>';
+		for (var i in averages){
+			if(eventName != "event-333mbf" && eventName != "event-333mbo"){
+				helper = bestAverage(wszystko[eventName], averages[i]);
 				if(helper != -1){
 					var czas = helper[0];
 					czasy = helper[1];
-					if(event != "event-333fm" && event != "event-333mbf"){
-						var current_text = '<tr><b>' + '<td class="event" data-event="333"> <span class=" cubing-icon '+event+'" style="padding:2px"></span> ' + nazwy_eventow[event] + "</b></td><td>" + convertBack(czas) + "</td><td>" + convert_array(czasy, event) + "</td></tr>";
+					table = table + '<tr><td><b>Average of ' + averages[i] +'</b></td><td></td><td></td><td></td></tr>'
+					if(eventName != "event-333fm" && eventName != "event-333mbf"){
+						var current_text = '<tr><td>Best</td><td>' + convertBack(czas) + "</td><td>" + convert_array(czasy, eventName) + "</td><td>" + czasy[0][1]+"->"+czasy[czasy.length-1][1] +"</td></tr>";
 					}
-					if(event == "event-333fm"){
-						var current_text = '<tr><b>' + '<td class="event" data-event="333"> <span class=" cubing-icon '+event+'" style="padding:2px"></span> ' + nazwy_eventow[event] + "</b></td><td>" + czas + "</td><td>" + convert_array(czasy, event) + "</td></tr>";
+					if(eventName == "event-333fm"){
+						var current_text = '<tr><td>Best</td><td>' + czas + "</td><td>" + convert_array(czasy, eventName) + "</td><td>" + czasy[0][1]+"->"+czasy[czasy.length-1][1] +"</td></tr>";
 					}
 					table = table + current_text;
+					current_avg = currentAverage(wszystko[eventName], averages[i])
+					console.log(current_avg)
+					if(current_avg != -1){
+						var czas = current_avg[0];
+						czasy = current_avg[1];
+						if(eventName != "event-333fm" && eventName != "event-333mbf"){
+							var current_text = '<tr><td>Current</td><td>' + convertBack(czas) + "</td><td>" + convert_array(czasy, eventName) + "</td><td>" + czasy[0][1]+"->"+czasy[czasy.length-1][1] +"</td></tr>";
+						}
+						if(eventName == "event-333fm"){
+							var current_text = '<tr><td>Current</td><td>' + czas + "</td><td>" + convert_array(czasy, eventName) + "</td><td>" + czasy[0][1]+"->"+czasy[czasy.length-1][1] +"</td></tr>";
+						}
+						table = table + current_text;
 				}
+				}
+
+				
 			}
-			if(event == "event-333mbf"){
-				helper = bestMultiAverage(wszystko[event], averages[i]);
-				console.log(i)
-				console.log(helper)
+			if(eventName == "event-333mbf"){
+				helper = bestMultiAverage(wszystko[eventName], averages[i]);
 				if(helper != -1){
 					czas = helper[0]
 					czasy = helper[1]
-					var current_text = '<tr><b>' + '<td class="event" data-event="333"> <span class=" cubing-icon '+event+'" style="padding:2px"></span> ' + nazwy_eventow[event] + "</b></td><td>" + czas + "</td><td>" + convert_array(czasy, "event-333mbf") + "</td></tr>";
+					console.log(helper)
+					var current_text = '<tr><td><b>Best Average of ' + averages[i] +'</b></td><td>' + czas + "</td><td>" + convert_array(czasy, "event-333mbf")  + "</td><td>" + czasy[0][1]+"->"+czasy[czasy.length-1][1] +"</td></tr>";
 
 					table = table + current_text;
 				}
