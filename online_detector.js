@@ -50,7 +50,7 @@ pbs = null;
 their_pbs = null;
 function compare(){
 	uri = 'https://www.worldcubeassociation.org/api/v0/persons/'
-	fetch(uri + wca_id)
+	fetch(uri + wca_id, {cache: 'no-store', headers: {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'}})
 		.then(response => response.json())
 		.then(function (data){
 			pbs = data["personal_records"];

@@ -35,7 +35,7 @@ var nazwy_rund = {
 	"h": "Qualification round"
 }
 var wszystko = {}
-$.get('https://www.worldcubeassociation.org/api/v0/persons/' + their_wca_id + '/results', function(data, status){
+$.get({url: 'https://www.worldcubeassociation.org/api/v0/persons/' + their_wca_id + '/results', headers: {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'}, success: function(data, status){
 wyniki = data;
 for(i in wyniki){
 	event_id = 'event-' + wyniki[i]['event_id']
@@ -79,7 +79,7 @@ for(i in wszystko['event-333mbf']){
 chrome.storage.sync.get({averages: [5, 12, 25, 100]}, (result) => {
     printAverages(result.averages);
 })
-});
+}});
 function average(array){
 	array.sort(function(a,b) { return a[0] - b[0];});
 	var do_usuniecia = Math.ceil(array.length*0.05);
@@ -273,6 +273,7 @@ function printAverages(averages){
 			if(eventName == "event-333mbf"){
 				helper = bestMultiAverage(wszystko[eventName], averages[i]);
 				if(helper != -1){
+					table = table + '<tr><td><b>Average of ' + averages[i] +'</b></td><td></td><td></td><td></td></tr>'
 					czas = helper[0]
 					czasy = helper[1]
 					console.log(helper)

@@ -1,6 +1,6 @@
-$.get('https://www.worldcubeassociation.org/api/v0/persons/' + their_wca_id, function(data, status){
+$.ajax({url: 'https://www.worldcubeassociation.org/api/v0/persons/' + their_wca_id, headers: {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'}, success: function(data, status){
 pbki = data.personal_records;
-$.get('https://www.worldcubeassociation.org/api/v0/persons/' + their_wca_id + '/results', function(data, status){
+$.ajax({url: 'https://www.worldcubeassociation.org/api/v0/persons/' + their_wca_id + '/results', headers: {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'}, success: function(data, status){
 wyniki = data;
 resultsAverage = {}
 resultsSingle = {}
@@ -73,5 +73,5 @@ function(){
 	
 }
 );
-});
-});
+}});
+}});
